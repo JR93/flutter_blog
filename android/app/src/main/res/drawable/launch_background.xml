@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modify this file to customize your launch splash screen -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/fes"/>
+    <!-- <item android:drawable="@android:color/white"/> -->
+    <!-- <item >
+        <shape android:shape="rectangle" >
+            <gradient
+                android:angle="90"
+                android:endColor="#fcf2c2"
+                android:startColor="#FFFFFF" />
+        </shape>
+    </item> -->
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/slogan_text"/>
+    </item>
+
+    <item >
+        <bitmap
+            android:gravity="bottom"
+            android:src="@mipmap/ic_launcher"/>
+    </item>
+</layer-list>
