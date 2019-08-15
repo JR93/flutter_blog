@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void _gotoSearchPage(String tag) {
     Navigator.push(context, MaterialPageRoute(
       builder: (BuildContext context) {
-        return SearchPage(queryTag: tag);
+        return SearchPage(query: tag);
       }
     ));
   }
@@ -219,7 +219,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return ExitTip(
       onTap: () {
-        _gotoUrl('$FES_ORIGIN/${_yyuid > 0 ? 'edit' : 'login'}.html');
+        _gotoUrl('$FES_ORIGIN/${_yyuid > 0 ? 'user' : 'login'}.html');
       },
       child: Column(
         children: <Widget>[

@@ -18,7 +18,7 @@ class WebviewPage extends StatefulWidget {
 
 class _WebviewPageState extends State<WebviewPage> {
   WebViewController _controller;
-  String _title = '正在加载中...';
+  String _title = '';
   int _yyuid = 0;
   int _index = 1;
 
@@ -27,24 +27,22 @@ class _WebviewPageState extends State<WebviewPage> {
     // 只有包含fes_m_blog才返回uid
     if (curUrl.contains('fes_m_blog')) {
       // 如果为0时，则获取
-      if (_yyuid == 0) {
-        var uid = await _controller.evaluateJavascript("window.localStorage.getItem('fes_user_uid')");
-        if (Platform.isAndroid) {
-          // Android端返回的是json字符串，iOS暂时只支持string和string格式的NSArray，其他类型数据还不支持。
-          uid = json.decode(uid);
-        }
-        _yyuid = (uid != null && uid != 'null') ? int.parse(uid) : 0;
+      var uid = await _controller.evaluateJavascript("window.localStorage.getItem('fes_user_uid')");
+      if (Platform.isAndroid) {
+        // Android端返回的是json字符串，iOS暂时只支持string和string格式的NSArray，其他类型数据还不支持。
+        uid = json.decode(uid);
       }
+      _yyuid = (uid != null && uid != 'null') ? int.parse(uid) : 0;
     }
     Navigator.of(context).pop(json.encode({
       'yyuid': _yyuid,
     }));
   }
 
-  void _gotoLogin() async {
+  void _gotoUrl(String url) async {
     var result = await Navigator.push(context, MaterialPageRoute(
       builder: (BuildContext context) {
-        return WebviewPage('$FES_ORIGIN/login.html');
+        return WebviewPage(url);
       }
     ));
     if (result != null) {
@@ -65,6 +63,15 @@ class _WebviewPageState extends State<WebviewPage> {
     return widget.url.contains('fes_m_blog/login.html');
   }
 
+  String get _genTitle {
+    if (_isFesLogin) {
+      return '请使用工号登录';
+    } else if (widget.url.contains('fes_m_blog/user.html')) {
+      return '个人中心';
+    }
+    return _title;
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -76,7 +83,7 @@ class _WebviewPageState extends State<WebviewPage> {
         backgroundColor: _backgroundColor(BG_COLOR),
         appBar: AppBar(
           backgroundColor: _backgroundColor(THEME_COLOR),
-          title: Text(_isFesLogin ? '请使用工号登录' : _title, style: TextStyle(fontSize: 18.0,),),
+          title: Text(_genTitle, style: TextStyle(fontSize: 18.0,),),
           elevation: 0.0,
           centerTitle: true,
           leading: GestureDetector(
@@ -106,7 +113,13 @@ class _WebviewPageState extends State<WebviewPage> {
                 JavascriptChannel(
                   name: 'FesBridgeApiOfLogin',
                   onMessageReceived: (JavascriptMessage message) {
-                    _gotoLogin();
+                    _gotoUrl('$FES_ORIGIN/login.html');
+                  },
+                ),
+                JavascriptChannel(
+                  name: 'FesBridgeApiOfGoto',
+                  onMessageReceived: (JavascriptMessage message) {
+                    _gotoUrl(message.message);
                   },
                 ),
               ].toSet(),

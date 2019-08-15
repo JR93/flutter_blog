@@ -25,11 +25,12 @@ class Api {
     return result?.data?.list??<ArticleData>[];
   }
 
-  static Future<List<ArticleData>> getSearchList({ String queryTag = '', String query = '' }) async {
+  static Future<List<ArticleData>> getSearchList({ String query = '', String lastDate = '', int count = 20 }) async {
     var params = {
       'data': {
-        'queryTag': queryTag,
-        'query': query
+        'query': query,
+        'count': count,
+        'lastDate': lastDate
       }
     };
     var result;

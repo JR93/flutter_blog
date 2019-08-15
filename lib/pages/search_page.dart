@@ -8,9 +8,9 @@ import 'package:zhiku/pages/webview_page.dart';
 import 'package:zhiku/components/loading.dart';
 
 class SearchPage extends StatefulWidget {
-  final String queryTag;
+  final String query;
 
-  SearchPage({Key key, this.queryTag = ''}) : super(key: key);
+  SearchPage({Key key, this.query = ''}) : super(key: key);
 
   _SearchPageState createState() => new _SearchPageState();
 }
@@ -19,8 +19,10 @@ class _SearchPageState extends State<SearchPage> {
   TextEditingController _controller;
   ScrollController _scrollController; // 滚动监听
   List<ArticleData> _lists = []; // 存储列表数据
+  String _lastDate = ''; // 用于文章列表分页请求
   bool _showClear = false;
   bool _isLoading = false;
+  bool _isComplete = false;
 
   @override
   void initState() {
@@ -28,41 +30,54 @@ class _SearchPageState extends State<SearchPage> {
     _controller = new TextEditingController();
     _scrollController = new ScrollController();
     _initCheck();
+    // 监听滚动到底部加载
+    _scrollController.addListener(() {
+      if ( _scrollController.position.pixels > _scrollController.position.maxScrollExtent - 10) {
+        if (!_isComplete && !_isLoading && _lists.length > 0) {
+          _loadSerachData();
+        }
+      }
+    });
   }
 
   void _initCheck() {
-    if (widget.queryTag != '') {
-      _controller.text = widget.queryTag;
-      _loadSerachData(queryTag: widget.queryTag);
+    if (widget.query != '') {
+      _controller.text = widget.query;
+      _loadSerachData();
     }
   }
 
-  void _loadSerachData({queryTag = '', query = ''}) async {
+  void _loadSerachData({reset = false}) async {
     setState(() {
-      _isLoading = true;
+      if (reset) {
+        _isComplete = false;
+      } else {
+        _isLoading = true;
+      }
     });
-    List<ArticleData> data = await Api.getSearchList(queryTag: queryTag, query: query);
-    _lists.clear();
-    _lists.addAll(data);
+    if (reset) _lastDate = '';
+    List<ArticleData> data = await Api.getSearchList(query: _controller.text, lastDate: _lastDate);
     setState(() {
-      _isLoading = false;
+      if (reset) _lists.clear();
+      if (data.length > 0) {
+        if (data.length >= 10) {
+          _isLoading = false;
+        } else {
+          _isLoading = false;
+          _isComplete = true;
+        }
+        _lists.addAll(data);
+        _lastDate = _lists[_lists.length - 1]?.createTime ?? '';
+      } else {
+        _isLoading = false;
+        _isComplete = true;
+      }
     });
   }
 
   void _onSubmit(String val) {
     if (val != '') {
-      String tag = '';
-      for (int i = 0, len = ARTICLE_TAGS.length; i < len; i++) {
-        if (ARTICLE_TAGS[i].toLowerCase().contains(val.toLowerCase())) {
-          tag = ARTICLE_TAGS[i];
-          break;
-        }
-      }
-      if (tag != '') {
-        _loadSerachData(queryTag: tag);
-      } else {
-        _loadSerachData(query: val);
-      }
+      _loadSerachData(reset: true);
     }
   }
 
@@ -94,23 +109,32 @@ class _SearchPageState extends State<SearchPage> {
                   child: _lists.length > 0
                   ? ListView.builder(
                       controller: _scrollController,
-                      itemCount: _lists.length,
+                      itemCount: _lists.length + 1,
                       padding: EdgeInsets.symmetric(vertical: 10.0),
                       itemBuilder: (BuildContext context, int index) {
-                        return ArticleItem(
-                          data: _lists[index],
-                          onTap: (url) {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (BuildContext context) {
-                                return WebviewPage(url);
-                              }
-                            ));
-                          },
-                          onTapTag: (tag) {
-                            _controller.text = tag;
-                            _loadSerachData(queryTag: tag);
-                          },
-                        );
+                        if (index == _lists.length) {
+                          // 用于展示加载loading或者完成提示
+                          if (_isComplete) {
+                            return LoadingCompleteIndicator();
+                          } else {
+                            return LoadingIndicator(isLoading: _isLoading);
+                          }
+                        } else {
+                          return ArticleItem(
+                            data: _lists[index],
+                            onTap: (url) {
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (BuildContext context) {
+                                  return WebviewPage(url);
+                                }
+                              ));
+                            },
+                            onTapTag: (tag) {
+                              _controller.text = tag;
+                              _loadSerachData(reset: true);
+                            },
+                          );
+                        }
                       }
                     )
                   : Container(
@@ -175,7 +199,7 @@ class _SearchPageState extends State<SearchPage> {
                         }
                       },
                       onSubmitted: _onSubmit,
-                      autofocus: widget.queryTag == '',
+                      autofocus: widget.query == '',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.black,
