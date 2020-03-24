@@ -12,7 +12,7 @@ const BORDER_COLOR = Color(0xFFCACACA);
 const GREY_COLOR = Color(0xFF999999);
 const BLOCK_COLOR = Color(0xFFFFFFFF);
 
-const FES_ORIGIN = 'http://web.yy.com/fes_m_blog';
+const FES_ORIGIN = 'http://xxx.xx.com/xxxx';
 
 const SWATCH_CONFIG = MaterialColor(0xFFFFE150, {
   50: Color.fromRGBO(255, 225, 80, .1),
