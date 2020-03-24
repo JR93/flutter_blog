@@ -56,7 +56,7 @@ class Api {
 
   static Future<dynamic> getUserAvatar(int uid) async {
     var result;
-    final response = await http.get('http://w.yy.com//lite/task/user/query?uid=$uid');
+    final response = await http.get('http://x.xx.com//lite/task/user/query?uid=$uid');
     if (response.statusCode == 200) {
       result = UserInfo.fromJson(json.decode(response.body));
     } else {
